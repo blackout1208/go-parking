@@ -24,6 +24,28 @@ func main() {
 		for sig := range c {
 			log.Printf("captured %+v, exiting..", sig)
 			// sig is a ^C, handle it
+
+			log.Println("Killing libcamera-vid...")
+			if _, err := exec.Command("pkill", "libcamera-vid").Output(); err != nil {
+				log.Fatalln(err)
+			}
+
+			log.Println("Killing ffmpeg...")
+			if _, err := exec.Command("pkill", "ffmpeg").Output(); err != nil {
+				log.Fatalln(err)
+			}
+
+			counter := 0
+			for len(messages) > 0 {
+				log.Println("Waiting for all images to be processed..")
+				time.Sleep(1 * time.Second)
+
+				if counter > 10 {
+					log.Println("Timeout reached, without all images being processed. Exiting...")
+					break
+				}
+			}
+
 			kill <- true
 		}
 	}()
