@@ -56,15 +56,15 @@ func main() {
 
 func runCamera(messages chan int) {
 	for {
-		log.Println("Starting video capture...")
+		log.Println("Video capture started...")
 
-		_, err := exec.Command("libcamera-vid", "-t", "10000", "-o", "test.h264", "--width", "1920", "--height", "1080").Output()
+		messages <- 1
+
+		_, err := exec.Command("libcamera-vid", "-t", "1000", "-o", "test.h264", "--width", "1920", "--height", "1080").Output()
 		if err != nil {
 			log.Fatalln(err)
 		}
 		log.Println("Video captured successfully")
-
-		messages <- 1
 	}
 }
 
@@ -82,6 +82,6 @@ func processVideo(messages chan int) {
 		if err != nil {
 			log.Fatalln(err)
 		}
-		log.Println("Video processed successfully")
+		log.Println("Processing video successfully completed")
 	}
 }
