@@ -11,9 +11,8 @@ import (
 
 func main() {
 	messages := make(chan int)
-	recording := make(chan int)
 
-	go func() { runCamera(messages, recording) }()
+	go func() { runCamera(messages) }()
 	go func() { processVideo(messages) }()
 
 	log.Println("Program started successfully..")
@@ -28,7 +27,8 @@ func main() {
 			// sig is a ^C, handle it
 
 			counter := 0
-			for len(recording) > 0 {
+			log.Println("Waiting for all images to be processed..", len(messages))
+			for len(messages) > 0 {
 				log.Println("Waiting for all images to be processed..")
 				time.Sleep(1 * time.Second)
 
@@ -54,17 +54,15 @@ func main() {
 	<-kill
 }
 
-func runCamera(messages, recording chan int) {
+func runCamera(messages chan int) {
 	for {
-		recording <- 1
+		log.Println("Starting video capture...")
 
 		_, err := exec.Command("libcamera-vid", "-t", "10000", "-o", "test.h264", "--width", "1920", "--height", "1080").Output()
 		if err != nil {
 			log.Fatalln(err)
 		}
 		log.Println("Video captured successfully")
-
-		<-recording
 
 		messages <- 1
 	}
@@ -73,6 +71,8 @@ func runCamera(messages, recording chan int) {
 func processVideo(messages chan int) {
 	for {
 		<-messages
+
+		log.Println("Processing video...")
 
 		now := time.Now()
 		// format now time to timestamp
