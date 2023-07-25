@@ -42,15 +42,6 @@ func runCamera(messages chan int) {
 	}
 }
 
-func touch() {
-	_, err := exec.Command("touch", "./flag.txt").Output()
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	log.Println("File touched successfully")
-}
-
 func processVideo(messages chan int) {
 	for {
 		<-messages
