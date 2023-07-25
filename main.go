@@ -9,11 +9,14 @@ import (
 	"time"
 )
 
-func main() {
-	messages := make(chan int)
+const _videoCaptureTime = 5 * time.Second
 
-	go func() { runCamera(messages) }()
-	go func() { processVideo(messages) }()
+func main() {
+	recording := make(chan int)
+	process := make(chan int)
+
+	go func() { runCamera(recording, process) }()
+	go func() { processVideo(process) }()
 
 	log.Println("Program started successfully..")
 
@@ -27,25 +30,15 @@ func main() {
 			// sig is a ^C, handle it
 
 			counter := 0
-			log.Println("Waiting for all images to be processed..", len(messages))
-			for len(messages) > 0 {
+			log.Println("Waiting for all images to be processed..", len(process))
+			for len(process) > 0 {
 				log.Println("Waiting for all images to be processed..")
-				time.Sleep(1 * time.Second)
+				time.Sleep(_videoCaptureTime)
 
 				if counter > 10 {
 					log.Println("Timeout reached, without all images being processed. Exiting...")
 					break
 				}
-			}
-
-			log.Println("Killing libcamera-vid...")
-			if _, err := exec.Command("pkill", "libcamera-vid").Output(); err != nil {
-				log.Fatalln(err)
-			}
-
-			log.Println("Killing ffmpeg...")
-			if _, err := exec.Command("pkill", "ffmpeg").Output(); err != nil {
-				log.Fatalln(err)
 			}
 
 			kill <- true
@@ -54,25 +47,26 @@ func main() {
 	<-kill
 }
 
-func runCamera(messages chan int) {
+func runCamera(recording, process chan int) {
 	for {
 		log.Println("Video capture started...")
-
-		messages <- 1
-
-		_, err := exec.Command("libcamera-vid", "-t", "1000", "-o", "test.h264", "--width", "1920", "--height", "1080").Output()
+		recording <- 1
+		_, err := exec.Command("libcamera-vid", "-t", fmt.Sprint(_videoCaptureTime), "-o", "test.h264", "--width", "1920", "--height", "1080").Output()
 		if err != nil {
 			log.Fatalln(err)
 		}
+
+		process <- 1
+		<-recording
 		log.Println("Video captured successfully")
 	}
 }
 
-func processVideo(messages chan int) {
+func processVideo(process chan int) {
 	for {
-		<-messages
 
-		log.Println("Processing video...")
+		log.Println("Processing video...", len(process))
+		<-process
 
 		now := time.Now()
 		// format now time to timestamp
