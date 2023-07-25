@@ -10,23 +10,24 @@ import (
 )
 
 func main() {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	go func() {
-		for sig := range c {
-			log.Printf("captured %+v, exiting..", sig)
-			// sig is a ^C, handle it
-			touch()
-		}
-	}()
-
 	messages := make(chan int)
 	go func() { runCamera(messages) }()
 	go func() { processVideo(messages) }()
 
-	for {
-		log.Println("Tracking started successfully")
-	}
+	log.Println("Program started successfully..")
+
+	c := make(chan os.Signal, 1)
+	kill := make(chan bool)
+	signal.Notify(c, os.Interrupt)
+
+	go func() {
+		for sig := range c {
+			log.Printf("captured %+v, exiting..", sig)
+			// sig is a ^C, handle it
+			kill <- true
+		}
+	}()
+	<-kill
 }
 
 func runCamera(messages chan int) {
