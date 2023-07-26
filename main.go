@@ -12,10 +12,10 @@ import (
 const _videoCaptureTime = 5 * time.Second
 
 func main() {
-	recording := make(chan int, 10)
-	process := make(chan int, 10)
+	var recording bool
+	process := make(chan int)
 
-	go func() { runCamera(recording, process) }()
+	go func() { runCamera(&recording, process) }()
 	go func() { processVideo(process) }()
 
 	log.Println("Program started successfully..")
@@ -30,8 +30,8 @@ func main() {
 			// sig is a ^C, handle it
 
 			counter := 0
-			log.Println("Waiting for all images to be processed..", len(process), len(recording))
-			for len(process) > 0 || len(recording) > 0 {
+			log.Println("Waiting for all images to be processed..", len(process), recording)
+			for len(process) > 0 || recording {
 				log.Println("Waiting for all images to be processed..")
 				time.Sleep(_videoCaptureTime)
 
@@ -47,9 +47,9 @@ func main() {
 	<-kill
 }
 
-func runCamera(recording, process chan int) {
+func runCamera(recording *bool, process chan int) {
 	for {
-		recording <- 1
+		*recording = true
 		log.Println("Video capture started...")
 		_, err := exec.Command("libcamera-vid", "-t", fmt.Sprint(_videoCaptureTime), "-o", "test.h264", "--width", "1920", "--height", "1080").Output()
 		if err != nil {
@@ -57,7 +57,7 @@ func runCamera(recording, process chan int) {
 		}
 
 		process <- 1
-		<-recording
+		*recording = false
 		log.Println("Video captured successfully")
 	}
 }
