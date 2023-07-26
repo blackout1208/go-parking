@@ -10,8 +10,6 @@ import (
 	"time"
 )
 
-const _videoCaptureTime = 5 * time.Second
-
 var wg sync.WaitGroup
 
 func main() {
@@ -30,6 +28,7 @@ func main() {
 
 			log.Println("Waiting for all images to be processed..")
 			wg.Wait()
+			log.Println("All images processed..")
 
 			kill <- true
 		}
@@ -40,15 +39,15 @@ func main() {
 func runCamera() {
 	for {
 		log.Println("Video capture started...")
+		wg.Add(1)
 
-		_, err := exec.Command("libcamera-vid", "-t", fmt.Sprint(_videoCaptureTime), "-o", "test.h264", "--width", "1920", "--height", "1080").Output()
+		_, err := exec.Command("libcamera-vid", "-t", "1000", "-o", "test.h264", "--width", "1920", "--height", "1080").Output()
 		if err != nil {
 			log.Fatalln(err)
 		}
 
 		log.Println("Video captured successfully")
 
-		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			processVideo()
