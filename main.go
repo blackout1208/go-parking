@@ -12,11 +12,11 @@ import (
 const _videoCaptureTime = 5 * time.Second
 
 func main() {
+	messages := make(chan int)
 	var recording bool
-	process := make(chan int)
 
-	go func() { runCamera(&recording, process) }()
-	go func() { processVideo(process) }()
+	go func() { runCamera(&recording, messages) }()
+	go func() { processVideo(messages) }()
 
 	log.Println("Program started successfully..")
 
@@ -30,10 +30,10 @@ func main() {
 			// sig is a ^C, handle it
 
 			counter := 0
-			log.Println("Waiting for all images to be processed..", len(process), recording)
-			for len(process) > 0 || recording {
+			log.Println("Waiting for all images to be processed..", len(messages), recording)
+			for len(messages) > 0 || recording {
 				log.Println("Waiting for all images to be processed..")
-				time.Sleep(_videoCaptureTime)
+				time.Sleep(1 * time.Second)
 
 				if counter > 10 {
 					log.Println("Timeout reached, without all images being processed. Exiting...")
@@ -47,26 +47,27 @@ func main() {
 	<-kill
 }
 
-func runCamera(recording *bool, process chan int) {
+func runCamera(recording *bool, messages chan int) {
 	for {
 		*recording = true
 		log.Println("Video capture started...")
-		_, err := exec.Command("libcamera-vid", "-t", fmt.Sprint(_videoCaptureTime), "-o", "test.h264", "--width", "1920", "--height", "1080").Output()
+
+		_, err := exec.Command("libcamera-vid", "-t", "1000", "-o", "test.h264", "--width", "1920", "--height", "1080").Output()
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		process <- 1
+		messages <- 1
 		*recording = false
 		log.Println("Video captured successfully")
 	}
 }
 
-func processVideo(process chan int) {
+func processVideo(messages chan int) {
 	for {
+		log.Println("Processing video...", len(messages))
 
-		<-process
-		log.Println("Processing video...", len(process))
+		<-messages
 
 		now := time.Now()
 		// format now time to timestamp
