@@ -12,10 +12,11 @@ import (
 
 const _videoCaptureTime = 5 * time.Second
 
-func main() {
-	var wg sync.WaitGroup
+var wg sync.WaitGroup
 
-	go func() { runCamera(&wg) }()
+func main() {
+
+	go func() { runCamera() }()
 
 	log.Println("Program started successfully..")
 
@@ -36,7 +37,7 @@ func main() {
 	<-kill
 }
 
-func runCamera(wg *sync.WaitGroup) {
+func runCamera() {
 	for {
 		log.Println("Video capture started...")
 
