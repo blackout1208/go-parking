@@ -13,34 +13,33 @@ import (
 var wg sync.WaitGroup
 
 func main() {
-	kill := make(chan bool)
+	c := make(chan os.Signal, 1)
 
-	go func() { runCamera(kill) }()
+	go func() { runCamera(c) }()
 
 	log.Println("Program started successfully..")
 
-	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 
 	go func() {
 		for sig := range c {
 			log.Println("captured ^C, exiting..", sig)
-			kill <- true
 			log.Println("Waiting for all images to be processed..")
-			wg.Wait()
-			log.Println("All images processed..")
 
+			wg.Wait()
+
+			log.Println("All images processed..")
+			return
 		}
 	}()
-	<-kill
+	<-c
 }
 
-func runCamera(kill chan bool) {
+func runCamera(c chan os.Signal) {
 	for {
 		select {
-		case isToStop := <-kill:
-			kill <- isToStop
-			log.Println("Stopping camera...")
+		case interrupt := <-c:
+			log.Println("Stopping camera...", interrupt)
 			return
 		default:
 			log.Println("Capturing...")
