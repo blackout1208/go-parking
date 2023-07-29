@@ -25,12 +25,11 @@ func main() {
 	go func() {
 		for sig := range c {
 			log.Println("captured ^C, exiting..", sig)
-
+			kill <- true
 			log.Println("Waiting for all images to be processed..")
 			wg.Wait()
 			log.Println("All images processed..")
 
-			kill <- true
 		}
 	}()
 	<-kill
@@ -41,19 +40,18 @@ func runCamera(kill chan bool) {
 		select {
 		case isToStop := <-kill:
 			kill <- isToStop
+			log.Println("Stopping camera...")
 			return
 		default:
+			log.Println("Capturing...")
+			wg.Add(1)
+			_, err := exec.Command("libcamera-vid", "-t", "1000", "-o", "test.h264", "--width", "1920", "--height", "1080").Output()
+			if err != nil {
+				log.Fatalln(err)
+			}
+
+			log.Println("Video captured")
 		}
-
-		log.Println("Video capture started...")
-		wg.Add(1)
-
-		_, err := exec.Command("libcamera-vid", "-t", "1000", "-o", "test.h264", "--width", "1920", "--height", "1080").Output()
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		log.Println("Video captured successfully")
 
 		go func() {
 			defer wg.Done()
