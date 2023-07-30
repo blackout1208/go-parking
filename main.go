@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 	"time"
 )
 
@@ -36,10 +37,10 @@ func main() {
 		readInput(&inputChannel)
 		input := <-inputChannel
 		inputChannel <- input
-		if input == '1' {
+		if strings.ContainsRune("1", input) {
 			fmt.Println("Starting..")
 			go runCamera(inputChannel)
-		} else if input == '2' {
+		} else if strings.ContainsRune("2", input) {
 			fmt.Println("Exiting..")
 			processVideo()
 			os.Exit(0)
@@ -54,7 +55,7 @@ func runCamera(inputChannel chan rune) {
 	for {
 		select {
 		case input, ok := <-inputChannel:
-			if ok && input != '1' {
+			if ok && strings.ContainsRune("1", input) {
 				fmt.Println("Stopping..")
 				return
 			} else {
