@@ -35,14 +35,17 @@ func main() {
 	defer keyboard.Close()
 
 	inputChannel := make(chan rune, 1)
+	isToExec := make(chan bool, 1)
 
 	for {
 		readInput(&inputChannel)
 		input := <-inputChannel
 		if input == '1' {
+			isToExec <- true
 			fmt.Println("Starting..")
-			go runCamera()
+			go runCamera(&isToExec)
 		} else if input == '2' {
+			isToExec <- false
 			fmt.Println("Exiting..")
 			wg.Wait()
 			os.Exit(0)
@@ -53,9 +56,14 @@ func main() {
 	}
 }
 
-func runCamera() {
+func runCamera(isToExec *chan bool) {
 	for {
+		isExec := <-*isToExec
 		fmt.Println("Video capture started...")
+		if !isExec {
+			break
+		}
+
 		wg.Add(1)
 
 		_, err := exec.Command("libcamera-vid", "-t", "1000", "-o", "test.h264", "--width", "1920", "--height", "1080").Output()
@@ -65,14 +73,13 @@ func runCamera() {
 
 		fmt.Println("Video captured successfully")
 
-		go func() {
-			defer wg.Done()
-			processVideo()
-		}()
+		go processVideo()
 	}
 }
 
 func processVideo() {
+	defer wg.Done()
+
 	fmt.Println("Processing video...")
 
 	now := time.Now()
