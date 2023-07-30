@@ -72,16 +72,16 @@ func runCamera(rootFolder string, inputChannel chan rune) {
 	default:
 	}
 
-	if err := createDirectories(fmt.Sprint(rootFolder)); err != nil {
+	if err := createDirectories(rootFolder); err != nil {
 		log.Fatalln(err)
 	}
 
 	fmt.Println("Video capture started...")
 
-	fileName := time.Now().Format("2006-01-02_15-04-05")
+	runtime := time.Now().Format("2006-01-02_15-04-05")
 
-	_, err := exec.Command("libcamera-vid", "-t", "0", "-o", fmt.Sprint(rootFolder, fileName, ".h264"), "--width", "1920", "--height", "1080").Output()
-	if err != nil {
+	fileName := fmt.Sprint(rootFolder, runtime, ".h264")
+	if err := execRecording(fileName); err != nil {
 		log.Fatalln(err)
 	}
 
@@ -99,23 +99,31 @@ func processVideo(rootFolder string) {
 	mp4Folder := fmt.Sprint(rootFolder, "mp4/")
 	framesFolder := fmt.Sprint(rootFolder, "frames/")
 
-	createDirectories(mp4Folder)
-	createDirectories(framesFolder)
+	if err := createDirectories(mp4Folder); err != nil {
+		log.Fatalln(err)
+	}
+
+	if err := createDirectories(framesFolder); err != nil {
+		log.Fatalln(err)
+	}
 
 	for _, file := range files {
 		if path.Ext(file.Name()) != ".h264" {
 			continue
 		}
 
-		_, err := exec.Command("ffmpeg", "-i", fmt.Sprint(rootFolder, file.Name()), "-c:v", "copy", "-c:a", "copy", fmt.Sprint(mp4Folder, file.Name(), ".mp4")).Output()
-		if err != nil {
+		sourcePath := fmt.Sprint(rootFolder, file.Name())
+		mp4FilePath := fmt.Sprint(mp4Folder, file.Name(), ".mp4")
+		framesFilePath := fmt.Sprint(framesFolder, file.Name(), "_%04d.png")
+
+		if err := generateMP4(sourcePath, mp4FilePath); err != nil {
 			log.Fatalln(err)
 		}
 
-		_, err = exec.Command("ffmpeg", "-i", fmt.Sprint(mp4Folder, file.Name(), ".mp4"), "-r", "1", fmt.Sprint(framesFolder, file.Name(), "_%04d.png")).Output()
-		if err != nil {
+		if err := generateFrames(mp4FilePath, framesFilePath); err != nil {
 			log.Fatalln(err)
 		}
+
 	}
 
 	fmt.Println("Processing video successfully completed")
@@ -127,6 +135,32 @@ func createDirectories(path string) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func execRecording(fileName string) error {
+	_, err := exec.Command("libcamera-vid", "-t", "0", "-o", fileName, "--width", "1920", "--height", "1080").Output()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func generateMP4(sourcePath, mp4FilePath string) error {
+	_, err := exec.Command("ffmpeg", "-i", sourcePath, "-c:v", "copy", "-c:a", "copy", mp4FilePath).Output()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func generateFrames(mp4FilePath, framesFilePath string) error {
+	_, err := exec.Command("ffmpeg", "-i", mp4FilePath, "-r", "1", framesFilePath).Output()
+	if err != nil {
+		return err
 	}
 
 	return nil
