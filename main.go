@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"path/filepath"
 	"time"
 )
 
@@ -52,19 +51,15 @@ func main() {
 
 func runCamera() {
 	for {
-		ex, err := os.Executable()
-		if err != nil {
-			panic(err)
-		}
-		exPath := filepath.Dir(ex)
+		exPath := "./"
 
-		fmt.Println("Video capture started...")
+		fmt.Println("Video capture started...", exPath)
 
 		now := time.Now()
 		// format now time to timestamp
 		timestamp := now.Format("2006-01-02_15-04-05")
 
-		_, err = exec.Command("libcamera-vid", "-t", "1000", "-o", fmt.Sprint(exPath, "/tmp/", timestamp, ".h264"), "--width", "1920", "--height", "1080").Output()
+		_, err := exec.Command("libcamera-vid", "-t", "1000", "-o", fmt.Sprint(exPath, "/tmp/", timestamp, ".h264"), "--width", "1920", "--height", "1080").Output()
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -77,11 +72,8 @@ func runCamera() {
 
 func processVideo() {
 	fmt.Println("Processing videos...")
-	ex, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-	exPath := filepath.Dir(ex)
+
+	exPath := "./"
 
 	files, err := os.ReadDir(fmt.Sprint(exPath, "/tmp/"))
 	if err != nil {
