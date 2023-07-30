@@ -29,6 +29,9 @@ func main() {
 			go runCamera(rootFolder, inputChannel)
 		} else if strings.ContainsRune("2", input) {
 			fmt.Println("Exiting..")
+			if err := killRecording(); err != nil {
+				log.Fatalln(err)
+			}
 
 			rootFolder := fmt.Sprint("./", runtime, "/")
 
@@ -57,13 +60,7 @@ func runCamera(rootFolder string, inputChannel chan rune) {
 	select {
 	case input, ok := <-inputChannel:
 		if ok && !strings.ContainsRune("1", input) {
-			fmt.Println("Stopping..")
-
-			output, err := exec.Command("pkill", "libcamera-vid").Output()
-			if err != nil {
-				log.Fatalln(output, err)
-			}
-
+			fmt.Println("Stopping..", time.Now().Format("2006-01-02_15-04-05"))
 			return
 		} else if strings.ContainsRune("2", input) {
 			fmt.Println("Channel closed!")
@@ -137,6 +134,14 @@ func createDirectories(path string) error {
 		}
 	}
 
+	return nil
+}
+
+func killRecording() error {
+	_, err := exec.Command("pkill", "libcamera-vid").Output()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
