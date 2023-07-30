@@ -35,9 +35,10 @@ func main() {
 	for {
 		readInput(&inputChannel)
 		input := <-inputChannel
+		inputChannel <- input
 		if input == '1' {
 			fmt.Println("Starting..")
-			go runCamera()
+			go runCamera(inputChannel)
 		} else if input == '2' {
 			fmt.Println("Exiting..")
 			processVideo()
@@ -49,33 +50,42 @@ func main() {
 	}
 }
 
-func runCamera() {
+func runCamera(inputChannel chan rune) {
 	for {
-		exPath := "./"
+		select {
+		case input, ok := <-inputChannel:
+			if ok {
+				if input != '1' {
+					fmt.Println("Stopping..")
+					return
+				}
+			} else {
+				fmt.Println("Channel closed!")
+				return
+			}
+		default:
+			fmt.Println("No value ready, moving on.")
+		}
 
-		fmt.Println("Video capture started...", exPath)
+		fmt.Println("Video capture started...")
 
 		now := time.Now()
 		// format now time to timestamp
 		timestamp := now.Format("2006-01-02_15-04-05")
 
-		_, err := exec.Command("libcamera-vid", "-t", "1000", "-o", fmt.Sprint(exPath, "/tmp/", timestamp, ".h264"), "--width", "1920", "--height", "1080").Output()
+		_, err := exec.Command("libcamera-vid", "-t", "1000", "-o", fmt.Sprint("./", "tmp/", timestamp, ".h264"), "--width", "1920", "--height", "1080").Output()
 		if err != nil {
 			log.Fatalln(err)
 		}
 
 		fmt.Println("Video captured successfully")
-
-		// go processVideo()
 	}
 }
 
 func processVideo() {
 	fmt.Println("Processing videos...")
 
-	exPath := "./"
-
-	files, err := os.ReadDir(fmt.Sprint(exPath, "/tmp/"))
+	files, err := os.ReadDir(fmt.Sprint("./", "tmp/"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -85,11 +95,7 @@ func processVideo() {
 			continue
 		}
 
-		now := time.Now()
-		// format now time to timestamp
-		timestamp := now.Format("2006-01-02_15-04-05")
-
-		_, err := exec.Command("ffmpeg", "-i", fmt.Sprint(exPath, "/tmp/", file, ".h264"), "-c:v", "copy", "-c:a", "copy", fmt.Sprint("html/", timestamp, ".mp4")).Output()
+		_, err := exec.Command("ffmpeg", "-i", fmt.Sprint("./", "tmp/", file.Name()), "-c:v", "copy", "-c:a", "copy", fmt.Sprint("./", "html/", file.Name(), ".mp4")).Output()
 		if err != nil {
 			log.Fatalln(err)
 		}
