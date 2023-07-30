@@ -36,7 +36,10 @@ func main() {
 		readInput(&inputChannel)
 		input := <-inputChannel
 		inputChannel <- input
-		if input == '1' {
+		if input == '0' {
+			fmt.Println("Starting..")
+			go runJPEG(inputChannel)
+		} else if input == '1' {
 			fmt.Println("Starting..")
 			go runCamera(inputChannel)
 		} else if input == '2' {
@@ -50,21 +53,46 @@ func main() {
 	}
 }
 
-func runCamera(inputChannel chan rune) {
+func runJPEG(inputChannel chan rune) {
 	for {
 		select {
 		case input, ok := <-inputChannel:
-			if ok {
-				if input != '1' {
-					fmt.Println("Stopping..")
-					return
-				}
+			if ok && input != '1' {
+				fmt.Println("Stopping..")
+				return
 			} else {
 				fmt.Println("Channel closed!")
 				return
 			}
 		default:
-			fmt.Println("No value ready, moving on.")
+		}
+
+		now := time.Now()
+		// format now time to timestamp
+		timestamp := now.Format("2006-01-02_15-04-05")
+
+		_, err := exec.Command("libcamera-jpeg", "-o", fmt.Sprint("./", "tmp/", timestamp, ".jpg"), "--width", "1920", "--height", "1080").Output()
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		fmt.Println("Picture captured successfully")
+
+	}
+}
+
+func runCamera(inputChannel chan rune) {
+	for {
+		select {
+		case input, ok := <-inputChannel:
+			if ok && input != '1' {
+				fmt.Println("Stopping..")
+				return
+			} else {
+				fmt.Println("Channel closed!")
+				return
+			}
+		default:
 		}
 
 		fmt.Println("Video capture started...")
