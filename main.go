@@ -27,9 +27,6 @@ func main() {
 			go runCamera(rootFolder)
 		} else if strings.ContainsRune("2", input) {
 			fmt.Println("Exiting..")
-			if err := killRecording(); err != nil {
-				log.Fatalln(err)
-			}
 
 			rootFolder := fmt.Sprint("./", runtime, "/")
 
@@ -119,14 +116,6 @@ func createDirectories(path string) error {
 		}
 	}
 
-	return nil
-}
-
-func killRecording() error {
-	_, err := exec.Command("pkill", "libcamera-vid").Output()
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
