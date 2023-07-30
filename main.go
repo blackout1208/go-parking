@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -10,6 +11,35 @@ import (
 	"strings"
 	"time"
 )
+
+func main() {
+	inputChannel := make(chan rune, 1)
+	runtime := time.Now().Format("2006-01-02_15-04-05")
+
+	for {
+		readInput(&inputChannel)
+		input := <-inputChannel
+		inputChannel <- input
+		if strings.ContainsRune("1", input) {
+			fmt.Println("Starting..")
+
+			runtime = time.Now().Format("2006-01-02_15-04-05")
+			rootFolder := fmt.Sprint("./", runtime, "/")
+
+			go runCamera(rootFolder, inputChannel)
+		} else if strings.ContainsRune("2", input) {
+			fmt.Println("Exiting..")
+
+			rootFolder := fmt.Sprint("./", runtime, "/")
+
+			processVideo(rootFolder)
+			os.Exit(0)
+			break
+		} else {
+			fmt.Println("Invalid option selected")
+		}
+	}
+}
 
 func readInput(inputChannel *chan rune) {
 	fmt.Println(`Choose an option: 1. Start; 2. Exit`)
@@ -23,36 +53,15 @@ func readInput(inputChannel *chan rune) {
 	*inputChannel <- input
 }
 
-func main() {
-	inputChannel := make(chan rune, 1)
-
-	for {
-		readInput(&inputChannel)
-		input := <-inputChannel
-		inputChannel <- input
-		if strings.ContainsRune("1", input) {
-			fmt.Println("Starting..")
-			go runCamera(inputChannel)
-		} else if strings.ContainsRune("2", input) {
-			fmt.Println("Exiting..")
-			processVideo()
-			os.Exit(0)
-			break
-		} else {
-			fmt.Println("Invalid option selected")
-		}
-	}
-}
-
-func runCamera(inputChannel chan rune) {
+func runCamera(rootFolder string, inputChannel chan rune) {
 	select {
 	case input, ok := <-inputChannel:
 		if ok && !strings.ContainsRune("1", input) {
 			fmt.Println("Stopping..")
 
-			_, err := exec.Command("pkill", "libcamera-vid").Output()
+			output, err := exec.Command("pkill", "libcamera-vid").Output()
 			if err != nil {
-				log.Fatalln(err)
+				log.Fatalln(output, err)
 			}
 
 			return
@@ -63,12 +72,15 @@ func runCamera(inputChannel chan rune) {
 	default:
 	}
 
+	if err := createDirectories(fmt.Sprint(rootFolder)); err != nil {
+		log.Fatalln(err)
+	}
+
 	fmt.Println("Video capture started...")
 
-	now := time.Now()
-	timestamp := now.Format("2006-01-02_15-04-05")
+	fileName := time.Now().Format("2006-01-02_15-04-05")
 
-	_, err := exec.Command("libcamera-vid", "-t", "0", "-o", fmt.Sprint("./", "tmp/", timestamp, ".h264"), "--width", "1920", "--height", "1080").Output()
+	_, err := exec.Command("libcamera-vid", "-t", "0", "-o", fmt.Sprint(rootFolder, fileName, ".h264"), "--width", "1920", "--height", "1080").Output()
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -76,29 +88,42 @@ func runCamera(inputChannel chan rune) {
 	fmt.Println("Video captured successfully")
 }
 
-func processVideo() {
+func processVideo(rootFolder string) {
 	fmt.Println("Processing videos...")
 
-	files, err := os.ReadDir(fmt.Sprint("./", "tmp/"))
+	files, err := os.ReadDir(rootFolder)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	createDirectories(fmt.Sprint(rootFolder, "mp4/"))
 
 	for _, file := range files {
 		if path.Ext(file.Name()) != ".h264" {
 			continue
 		}
 
-		_, err := exec.Command("ffmpeg", "-i", fmt.Sprint("./", "tmp/", file.Name()), "-c:v", "copy", "-c:a", "copy", fmt.Sprint("./", "mp4/", file.Name(), ".mp4")).Output()
+		_, err := exec.Command("ffmpeg", "-i", fmt.Sprint(rootFolder, file.Name()), "-c:v", "copy", "-c:a", "copy", fmt.Sprint(rootFolder, "mp4/", file.Name(), ".mp4")).Output()
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		_, err = exec.Command("ffmpeg", "-i", fmt.Sprint("./", "mp4/", file.Name(), ".mp4"), "-r", "1", fmt.Sprint("./", "frames/", file.Name(), "_%04d.png")).Output()
+		_, err = exec.Command("ffmpeg", "-i", fmt.Sprint(rootFolder, "mp4/", file.Name(), ".mp4"), "-r", "1", fmt.Sprint(rootFolder, "frames/", file.Name(), "_%04d.png")).Output()
 		if err != nil {
 			log.Fatalln(err)
 		}
 	}
 
 	fmt.Println("Processing video successfully completed")
+}
+
+func createDirectories(path string) error {
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		err := os.Mkdir(path, os.ModePerm)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
