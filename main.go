@@ -96,19 +96,23 @@ func processVideo(rootFolder string) {
 		log.Fatal(err)
 	}
 
-	createDirectories(fmt.Sprint(rootFolder, "mp4/"))
+	mp4Folder := fmt.Sprint(rootFolder, "mp4/")
+	framesFolder := fmt.Sprint(rootFolder, "frames/")
+
+	createDirectories(mp4Folder)
+	createDirectories(framesFolder)
 
 	for _, file := range files {
 		if path.Ext(file.Name()) != ".h264" {
 			continue
 		}
 
-		_, err := exec.Command("ffmpeg", "-i", fmt.Sprint(rootFolder, file.Name()), "-c:v", "copy", "-c:a", "copy", fmt.Sprint(rootFolder, "mp4/", file.Name(), ".mp4")).Output()
+		_, err := exec.Command("ffmpeg", "-i", fmt.Sprint(rootFolder, file.Name()), "-c:v", "copy", "-c:a", "copy", fmt.Sprint(mp4Folder, file.Name(), ".mp4")).Output()
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		_, err = exec.Command("ffmpeg", "-i", fmt.Sprint(rootFolder, "mp4/", file.Name(), ".mp4"), "-r", "1", fmt.Sprint(rootFolder, "frames/", file.Name(), "_%04d.png")).Output()
+		_, err = exec.Command("ffmpeg", "-i", fmt.Sprint(mp4Folder, file.Name(), ".mp4"), "-r", "1", fmt.Sprint(framesFolder, file.Name(), "_%04d.png")).Output()
 		if err != nil {
 			log.Fatalln(err)
 		}
