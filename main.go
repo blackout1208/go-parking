@@ -55,6 +55,7 @@ func runCamera(inputChannel chan rune) {
 	for {
 		select {
 		case input, ok := <-inputChannel:
+			fmt.Printf("Rune 1: %q , Present or Not: %t", input, ok)
 			if ok && !strings.ContainsRune("1", input) {
 				fmt.Println("Stopping..")
 				return
