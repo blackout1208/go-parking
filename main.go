@@ -8,8 +8,6 @@ import (
 	"os/exec"
 	"sync"
 	"time"
-
-	"github.com/eiannone/keyboard"
 )
 
 var wg sync.WaitGroup
@@ -27,12 +25,12 @@ func readInput(inputChannel *chan rune) {
 }
 
 func main() {
-	err := keyboard.Open()
-	if err != nil {
-		log.Fatalln("Error opening keyboard:", err)
-		return
-	}
-	defer keyboard.Close()
+	// err := keyboard.Open()
+	// if err != nil {
+	// 	log.Fatalln("Error opening keyboard:", err)
+	// 	return
+	// }
+	// defer keyboard.Close()
 
 	inputChannel := make(chan rune, 1)
 	isToExec := make(chan bool, 1)
