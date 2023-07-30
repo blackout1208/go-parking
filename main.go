@@ -49,6 +49,12 @@ func runCamera(inputChannel chan rune) {
 	case input, ok := <-inputChannel:
 		if ok && !strings.ContainsRune("1", input) {
 			fmt.Println("Stopping..")
+
+			_, err := exec.Command("pkill", "libcamera-vid").Output()
+			if err != nil {
+				log.Fatalln(err)
+			}
+
 			return
 		} else if strings.ContainsRune("2", input) {
 			fmt.Println("Channel closed!")
