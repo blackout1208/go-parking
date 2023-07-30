@@ -57,11 +57,11 @@ func runJPEG(inputChannel chan rune) {
 	for {
 		select {
 		case input, ok := <-inputChannel:
-			if ok && input != '1' {
+			if ok && input != '0' {
 				fmt.Println("Stopping..")
 				return
 			} else {
-				fmt.Println("Channel closed!")
+				fmt.Println("Channel closed!", input, ok)
 				return
 			}
 		default:
