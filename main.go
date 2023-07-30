@@ -36,7 +36,7 @@ func main() {
 			rootFolder := fmt.Sprint("./", runtime, "/")
 
 			processVideo(rootFolder)
-			os.Exit(0)
+			// os.Exit(0)
 			break
 		} else {
 			fmt.Println("Invalid option selected")
@@ -86,7 +86,7 @@ func runCamera(rootFolder string, inputChannel chan rune) {
 }
 
 func processVideo(rootFolder string) {
-	fmt.Println("Processing videos...")
+	fmt.Println("Processing videos...", rootFolder)
 
 	files, err := os.ReadDir(rootFolder)
 	if err != nil {
