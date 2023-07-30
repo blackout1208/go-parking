@@ -13,20 +13,18 @@ import (
 )
 
 func main() {
-	inputChannel := make(chan rune, 1)
+	// inputChannel := make(chan rune, 1)
 	runtime := time.Now().Format("2006-01-02_15-04-05")
 
 	for {
-		readInput(&inputChannel)
-		input := <-inputChannel
-		inputChannel <- input
+		input := readInput()
 		if strings.ContainsRune("1", input) {
 			fmt.Println("Starting..")
 
 			runtime = time.Now().Format("2006-01-02_15-04-05")
 			rootFolder := fmt.Sprint("./", runtime, "/")
 
-			go runCamera(rootFolder, inputChannel)
+			go runCamera(rootFolder)
 		} else if strings.ContainsRune("2", input) {
 			fmt.Println("Exiting..")
 			if err := killRecording(); err != nil {
@@ -36,7 +34,6 @@ func main() {
 			rootFolder := fmt.Sprint("./", runtime, "/")
 
 			processVideo(rootFolder)
-			// os.Exit(0)
 			break
 		} else {
 			fmt.Println("Invalid option selected")
@@ -44,7 +41,7 @@ func main() {
 	}
 }
 
-func readInput(inputChannel *chan rune) {
+func readInput() rune {
 	fmt.Println(`Choose an option: 1. Start; 2. Exit`)
 
 	reader := bufio.NewReader(os.Stdin)
@@ -53,22 +50,10 @@ func readInput(inputChannel *chan rune) {
 		log.Fatalln(err)
 	}
 
-	*inputChannel <- input
+	return input
 }
 
-func runCamera(rootFolder string, inputChannel chan rune) {
-	select {
-	case input, ok := <-inputChannel:
-		if ok && !strings.ContainsRune("1", input) {
-			fmt.Println("Stopping..", time.Now().Format("2006-01-02_15-04-05"))
-			return
-		} else if strings.ContainsRune("2", input) {
-			fmt.Println("Channel closed!")
-			return
-		}
-	default:
-	}
-
+func runCamera(rootFolder string) {
 	if err := createDirectories(rootFolder); err != nil {
 		log.Fatalln(err)
 	}
