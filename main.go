@@ -52,32 +52,30 @@ func main() {
 }
 
 func runCamera(inputChannel chan rune) {
-	for {
-		select {
-		case input, ok := <-inputChannel:
-			if ok && !strings.ContainsRune("1", input) {
-				fmt.Println("Stopping..")
-				return
-			} else if strings.ContainsRune("2", input) {
-				fmt.Println("Channel closed!")
-				return
-			}
-		default:
+	select {
+	case input, ok := <-inputChannel:
+		if ok && !strings.ContainsRune("1", input) {
+			fmt.Println("Stopping..")
+			return
+		} else if strings.ContainsRune("2", input) {
+			fmt.Println("Channel closed!")
+			return
 		}
-
-		fmt.Println("Video capture started...")
-
-		now := time.Now()
-		// format now time to timestamp
-		timestamp := now.Format("2006-01-02_15-04-05")
-
-		_, err := exec.Command("libcamera-vid", "-t", "5000", "-o", fmt.Sprint("./", "tmp/", timestamp, ".h264"), "--width", "1920", "--height", "1080").Output()
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		fmt.Println("Video captured successfully")
+	default:
 	}
+
+	fmt.Println("Video capture started...")
+
+	now := time.Now()
+	// format now time to timestamp
+	timestamp := now.Format("2006-01-02_15-04-05")
+
+	_, err := exec.Command("libcamera-vid", "-t", "0", "-o", fmt.Sprint("./", "tmp/", timestamp, ".h264"), "--width", "1920", "--height", "1080").Output()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	fmt.Println("Video captured successfully")
 }
 
 func processVideo() {
