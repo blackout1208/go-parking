@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path"
 	"time"
 )
 
@@ -36,7 +37,7 @@ func main() {
 		input := <-inputChannel
 		if input == '1' {
 			fmt.Println("Starting..")
-			runCamera()
+			go runCamera()
 		} else if input == '2' {
 			fmt.Println("Exiting..")
 			processVideo()
@@ -76,11 +77,9 @@ func processVideo() {
 	}
 
 	for _, file := range files {
-		if file.IsDir() {
+		if path.Ext(file.Name()) != ".h264" {
 			continue
 		}
-
-		fmt.Println(file.Name(), file.IsDir())
 
 		now := time.Now()
 		// format now time to timestamp
