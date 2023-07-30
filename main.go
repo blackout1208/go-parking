@@ -95,6 +95,11 @@ func processVideo() {
 		if err != nil {
 			log.Fatalln(err)
 		}
+
+		_, err = exec.Command("ffmpeg", "-i", fmt.Sprint("./", "html/", file.Name(), ".mp4"), "-r", "1", fmt.Sprint("./", "frames/", file.Name(), "_%04d.png")).Output()
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
 
 	fmt.Println("Processing video successfully completed")
