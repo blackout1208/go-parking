@@ -9,30 +9,30 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/term"
+	"github.com/eiannone/keyboard"
 )
 
 var wg sync.WaitGroup
 
 func readInput(inputChannel *chan rune) {
-	fmt.Print(`Choose an option: 1. Start; 2. Exit`)
+	fmt.Println(`Choose an option: 1. Start; 2. Exit`)
 
 	reader := bufio.NewReader(os.Stdin)
 	input, _, err := reader.ReadRune()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
 
 	*inputChannel <- input
 }
 
 func main() {
-	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	err := keyboard.Open()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln("Error opening keyboard:", err)
 		return
 	}
-	defer term.Restore(int(os.Stdin.Fd()), oldState)
+	defer keyboard.Close()
 
 	inputChannel := make(chan rune, 1)
 
@@ -60,7 +60,7 @@ func runCamera() {
 
 		_, err := exec.Command("libcamera-vid", "-t", "1000", "-o", "test.h264", "--width", "1920", "--height", "1080").Output()
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalln(err)
 		}
 
 		fmt.Println("Video captured successfully")
@@ -81,7 +81,7 @@ func processVideo() {
 
 	_, err := exec.Command("ffmpeg", "-i", "test.h264", "-c:v", "copy", "-c:a", "copy", fmt.Sprint("html/", timestamp, ".mp4")).Output()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln(err)
 	}
 
 	fmt.Println("Processing video successfully completed")
