@@ -36,10 +36,7 @@ func main() {
 		readInput(&inputChannel)
 		input := <-inputChannel
 		inputChannel <- input
-		if input == '0' {
-			fmt.Println("Starting..")
-			go runJPEG(inputChannel)
-		} else if input == '1' {
+		if input == '1' {
 			fmt.Println("Starting..")
 			go runCamera(inputChannel)
 		} else if input == '2' {
@@ -50,34 +47,6 @@ func main() {
 		} else {
 			fmt.Println("Invalid option selected")
 		}
-	}
-}
-
-func runJPEG(inputChannel chan rune) {
-	for {
-		select {
-		case input, ok := <-inputChannel:
-			if ok && input != '0' {
-				fmt.Println("Stopping..")
-				return
-			} else {
-				fmt.Println("Channel closed!", input, ok)
-				return
-			}
-		default:
-		}
-
-		now := time.Now()
-		// format now time to timestamp
-		timestamp := now.Format("2006-01-02_15-04-05")
-
-		_, err := exec.Command("libcamera-jpeg", "-o", fmt.Sprint("./", "tmp/", timestamp, ".jpg"), "--width", "1920", "--height", "1080").Output()
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		fmt.Println("Picture captured successfully")
-
 	}
 }
 
@@ -101,7 +70,7 @@ func runCamera(inputChannel chan rune) {
 		// format now time to timestamp
 		timestamp := now.Format("2006-01-02_15-04-05")
 
-		_, err := exec.Command("libcamera-vid", "-t", "1000", "-o", fmt.Sprint("./", "tmp/", timestamp, ".h264"), "--width", "1920", "--height", "1080").Output()
+		_, err := exec.Command("libcamera-vid", "-t", "5000", "-o", fmt.Sprint("./", "tmp/", timestamp, ".h264"), "--width", "1920", "--height", "1080").Output()
 		if err != nil {
 			log.Fatalln(err)
 		}
