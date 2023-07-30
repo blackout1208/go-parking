@@ -24,13 +24,6 @@ func readInput(inputChannel *chan rune) {
 }
 
 func main() {
-	// err := keyboard.Open()
-	// if err != nil {
-	// 	log.Fatalln("Error opening keyboard:", err)
-	// 	return
-	// }
-	// defer keyboard.Close()
-
 	inputChannel := make(chan rune, 1)
 
 	for {
@@ -67,7 +60,6 @@ func runCamera(inputChannel chan rune) {
 	fmt.Println("Video capture started...")
 
 	now := time.Now()
-	// format now time to timestamp
 	timestamp := now.Format("2006-01-02_15-04-05")
 
 	_, err := exec.Command("libcamera-vid", "-t", "0", "-o", fmt.Sprint("./", "tmp/", timestamp, ".h264"), "--width", "1920", "--height", "1080").Output()
@@ -91,12 +83,12 @@ func processVideo() {
 			continue
 		}
 
-		_, err := exec.Command("ffmpeg", "-i", fmt.Sprint("./", "tmp/", file.Name()), "-c:v", "copy", "-c:a", "copy", fmt.Sprint("./", "html/", file.Name(), ".mp4")).Output()
+		_, err := exec.Command("ffmpeg", "-i", fmt.Sprint("./", "tmp/", file.Name()), "-c:v", "copy", "-c:a", "copy", fmt.Sprint("./", "mp4/", file.Name(), ".mp4")).Output()
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		_, err = exec.Command("ffmpeg", "-i", fmt.Sprint("./", "html/", file.Name(), ".mp4"), "-r", "1", fmt.Sprint("./", "frames/", file.Name(), "_%04d.png")).Output()
+		_, err = exec.Command("ffmpeg", "-i", fmt.Sprint("./", "mp4/", file.Name(), ".mp4"), "-r", "1", fmt.Sprint("./", "frames/", file.Name(), "_%04d.png")).Output()
 		if err != nil {
 			log.Fatalln(err)
 		}
