@@ -1,3 +1,3 @@
-module github.com/blackout1208/go-parking
+module github.com/blackout1208/go-parking/camera-app
 
-go 1.20
+go 1.19
