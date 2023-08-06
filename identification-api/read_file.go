@@ -9,7 +9,7 @@ import (
 	"cloud.google.com/go/storage"
 )
 
-func readFile() string {
+func GetFrame(bucketName, frameURI string) string {
 	ctx := context.Background()
 
 	client, err := storage.NewClient(ctx)
@@ -17,7 +17,7 @@ func readFile() string {
 		log.Fatal(err)
 	}
 
-	rc, err := client.Bucket("license-plates-go-parking").Object("testing-algo/frames11_output_0045.jpeg").NewReader(ctx)
+	rc, err := client.Bucket(bucketName).Object(frameURI).NewReader(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}

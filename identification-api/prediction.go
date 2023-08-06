@@ -33,3 +33,22 @@ func extractPrediction(respMap map[string]interface{}) Prediction {
 
 	return prediction
 }
+
+func (p *Prediction) getPlatesIMG() []bbox {
+	var platesIMG []bbox
+
+	for i, confidence := range p.Confidences {
+		if confidence < 0.2 || p.DisplayNames[i] != _licensePlateLabel {
+			continue
+		}
+
+		platesIMG = append(platesIMG, bbox{
+			xmin: p.Bboxes[i][0],
+			xmax: p.Bboxes[i][1],
+			ymin: p.Bboxes[i][2],
+			ymax: p.Bboxes[i][3],
+		})
+	}
+
+	return platesIMG
+}

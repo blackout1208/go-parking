@@ -62,7 +62,7 @@ func predictLicensePlate(frameBase64 string) map[string]interface{} {
 
 	// create aiplatformpb.predictRequest object with the necessary instances to send an image/jpeg to the endpoint
 	req := &aiplatformpb.PredictRequest{
-		Endpoint:   "projects/1086189634506/locations/us-central1/endpoints/1195419828043644928",
+		Endpoint:   "projects/1086189634506/locations/us-central1/endpoints/1986927462554009600",
 		Instances:  []*structpb.Value{instance},
 		Parameters: parameters,
 	}

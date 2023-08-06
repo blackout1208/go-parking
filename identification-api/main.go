@@ -16,31 +16,18 @@ func init() {
 }
 
 func main() {
-	frameBase64 := readFile()
+
+	// Get frame from cloud storage
+	bucketName := "license-plates-go-parking"
+	fileURI := "testing-algo/frames9_output_0015.jpeg"
+	frameBase64 := GetFrame(bucketName, fileURI)
 
 	response := predictLicensePlate(frameBase64)
 	prediction := extractPrediction(response)
 
-	var indexes []int
-	for i, confidence := range prediction.Confidences {
-		if confidence < 0.2 || prediction.DisplayNames[i] != _licensePlateLabel {
-			continue
-		}
+	platesIMG := prediction.getPlatesIMG()
 
-		indexes = append(indexes, i)
-	}
-	// "bboxes": [ [xMin, xMax, yMin, yMax], ...]
-	var images []bbox
-	for _, index := range indexes {
-		images = append(images, bbox{
-			xmin: prediction.Bboxes[index][0],
-			xmax: prediction.Bboxes[index][1],
-			ymin: prediction.Bboxes[index][2],
-			ymax: prediction.Bboxes[index][3],
-		})
-	}
-
-	for i, image := range images {
+	for i, image := range platesIMG {
 		// extract license plate from video frame
 		framePlate := extractLicensePlateIMG(i, frameBase64, bbox{
 			xmin: image.xmin,
